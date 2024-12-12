@@ -141,4 +141,52 @@ Make sure to include datasets to minimize bias and ensure ethical chatbot behavi
 
 ---
 
-Let me know if you need help with implementation or more specific datasets!
+## Fine-Tuning
+
+What is LoRA?
+LoRA is a parameter-efficient fine-tuning method that introduces low-rank matrices into specific layers of a pre-trained model. It works by:
+
+Freezing the Original Weights: During training, the original model weights remain unchanged.
+Injecting Trainable Matrices: Trainable low-rank matrices are added to certain layers (e.g., attention layers) to model the updates.
+These trainable matrices (called LoRA adapters) represent the task-specific changes required for fine-tuning.
+
+Why Save LoRA Adapters?
+Instead of saving the entire fine-tuned model, which can be massive (e.g., tens or hundreds of GB), you only save the small LoRA adapter weights. This has several benefits:
+
+Efficiency: LoRA adapters are much smaller than full model weights, making them easier to store and share.
+Flexibility: You can apply these adapters to the original pre-trained model during inference, effectively "merging" them on the fly.
+Cost-effectiveness: Fine-tuning with LoRA reduces training costs as fewer parameters are updated.
+Example Use Case
+Let’s say you’re fine-tuning a large language model like LLaMA on a healthcare dataset. Instead of saving the entire fine-tuned model:
+
+You save only the LoRA adapters, which might be just a few MB in size.
+During inference, you load the original pre-trained LLaMA model and apply the LoRA adapters dynamically to get the fine-tuned behavior.
+Saving LoRA Adapters
+Here’s how you might save LoRA adapters using the Hugging Face peft library:
+
+```python
+from peft import PeftModel
+
+# Assume 'model' is your fine-tuned model with LoRA applied
+model.save_pretrained("path_to_save_lora_adapters")
+This saves only the LoRA weights, not the entire model.
+```
+
+Loading LoRA Adapters
+To use the LoRA adapters later, you can load them back with the pre-trained model:
+
+```python
+from transformers import AutoModel
+from peft import PeftModel
+
+# Load the original model
+base_model = AutoModel.from_pretrained("path_to_base_model")
+
+# Load the LoRA adapters
+model_with_lora = PeftModel.from_pretrained(base_model, "path_to_save_lora_adapters")
+```
+
+This dynamically applies the fine-tuned LoRA adapters to the original model.
+
+Summary
+Saving as LoRA adapters is a lightweight and efficient way to capture the changes made during fine-tuning without needing to store the entire model. This approach is particularly beneficial when working with large models or deploying task-specific fine-tuned versions.
